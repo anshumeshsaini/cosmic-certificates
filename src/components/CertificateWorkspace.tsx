@@ -1,22 +1,52 @@
 
 import React, { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, Type, Download, Cpu, Upload as UploadIcon } from 'lucide-react';
+import { Upload, Image as ImageIcon, Type, Download, Cpu, Upload as UploadIcon, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const CertificateWorkspace = () => {
   const [certificateImage, setCertificateImage] = useState<string | null>(null);
-  const [textElements, setTextElements] = useState<Array<{id: string, text: string, x: number, y: number}>>([]);
+  const [textElements, setTextElements] = useState<Array<{
+    id: string, 
+    text: string, 
+    x: number, 
+    y: number, 
+    font: string,
+    color: string
+  }>>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [excelData, setExcelData] = useState<any[] | null>(null);
   const [totalRecords, setTotalRecords] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const excelInputRef = useRef<HTMLInputElement>(null);
+
+  const fontOptions = [
+    { value: 'Arial', label: 'Arial' },
+    { value: 'Times New Roman', label: 'Times New Roman' },
+    { value: 'Courier New', label: 'Courier New' },
+    { value: 'Georgia', label: 'Georgia' },
+    { value: 'Verdana', label: 'Verdana' },
+    { value: 'Impact', label: 'Impact' }
+  ];
+
+  const colorOptions = [
+    { value: 'black', label: 'Black' },
+    { value: 'white', label: 'White' },
+    { value: 'red', label: 'Red' },
+    { value: 'blue', label: 'Blue' },
+    { value: 'green', label: 'Green' },
+    { value: 'purple', label: 'Purple' },
+    { value: 'orange', label: 'Orange' },
+    { value: 'cyan', label: 'Cyan' },
+    { value: '#00ffc8', label: 'Cyberpunk Cyan' }
+  ];
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -110,9 +140,9 @@ const CertificateWorkspace = () => {
       
       // Add suggested text elements
       setTextElements([
-        { id: 'name', text: 'RECIPIENT NAME', x: 50, y: 40 },
-        { id: 'course', text: 'COURSE TITLE', x: 50, y: 55 },
-        { id: 'date', text: 'ISSUE DATE', x: 50, y: 70 }
+        { id: 'name', text: 'RECIPIENT NAME', x: 50, y: 40, font: 'Arial', color: 'black' },
+        { id: 'course', text: 'COURSE TITLE', x: 50, y: 55, font: 'Arial', color: 'black' },
+        { id: 'date', text: 'ISSUE DATE', x: 50, y: 70, font: 'Arial', color: 'black' }
       ]);
       
       toast.success('AI analysis complete! Detected optimal text placement areas');
@@ -124,7 +154,9 @@ const CertificateWorkspace = () => {
       id: `text-${Date.now()}`,
       text: 'New Text',
       x: 50,
-      y: 50
+      y: 50,
+      font: 'Arial',
+      color: 'black'
     };
     
     setTextElements([...textElements, newElement]);
@@ -133,6 +165,7 @@ const CertificateWorkspace = () => {
 
   const handleTextDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData('text/plain', id);
+    setSelectedTextId(id);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -155,6 +188,26 @@ const CertificateWorkspace = () => {
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+  };
+
+  const handleTextClick = (id: string) => {
+    setSelectedTextId(id);
+  };
+
+  const handleFontChange = (value: string) => {
+    if (!selectedTextId) return;
+    
+    setTextElements(textElements.map(el => 
+      el.id === selectedTextId ? { ...el, font: value } : el
+    ));
+  };
+
+  const handleColorChange = (value: string) => {
+    if (!selectedTextId) return;
+    
+    setTextElements(textElements.map(el => 
+      el.id === selectedTextId ? { ...el, color: value } : el
+    ));
   };
 
   const triggerFileInput = () => {
@@ -191,12 +244,13 @@ const CertificateWorkspace = () => {
         ctx.drawImage(img, 0, 0);
         
         // Draw the text elements
-        ctx.font = '24px Arial';
-        ctx.fillStyle = 'black';
-        
         textElements.forEach(element => {
           const xPos = (element.x / 100) * canvas.width;
           const yPos = (element.y / 100) * canvas.height;
+          
+          // Apply font and color
+          ctx.font = `24px ${element.font}`;
+          ctx.fillStyle = element.color;
           
           // Replace "RECIPIENT NAME" with the actual name
           let text = element.text;
@@ -241,11 +295,13 @@ const CertificateWorkspace = () => {
         ctx.drawImage(img, 0, 0);
         
         // Draw the text elements
-        ctx.font = '24px Arial';
-        ctx.fillStyle = 'black';
         textElements.forEach(element => {
           const xPos = (element.x / 100) * canvas.width;
           const yPos = (element.y / 100) * canvas.height;
+          
+          // Apply font and color
+          ctx.font = `24px ${element.font}`;
+          ctx.fillStyle = element.color;
           ctx.fillText(element.text, xPos, yPos);
         });
         
@@ -409,14 +465,17 @@ const CertificateWorkspace = () => {
                 {textElements.map((element) => (
                   <div 
                     key={element.id}
-                    className="absolute cursor-move bg-cyberpunk-black/40 backdrop-blur-sm border border-cyberpunk-cyan px-3 py-1 rounded text-white font-medium"
+                    className={`absolute cursor-move px-3 py-1 rounded ${selectedTextId === element.id ? 'bg-cyberpunk-black/60 backdrop-blur-sm border border-cyberpunk-cyan' : 'bg-cyberpunk-black/40 backdrop-blur-sm border border-cyberpunk-cyan/50'}`}
                     style={{ 
                       left: `${element.x}%`, 
                       top: `${element.y}%`, 
-                      transform: 'translate(-50%, -50%)'
+                      transform: 'translate(-50%, -50%)',
+                      fontFamily: element.font,
+                      color: element.color
                     }}
                     draggable
                     onDragStart={(e) => handleTextDragStart(e, element.id)}
+                    onClick={() => handleTextClick(element.id)}
                   >
                     {element.text}
                   </div>
@@ -433,6 +492,51 @@ const CertificateWorkspace = () => {
               </div>
             )}
           </div>
+          
+          {selectedTextId && (
+            <div className="flex gap-4 mt-4 p-4 bg-cyberpunk-black/60 rounded-lg border border-cyberpunk-cyan/30">
+              <div className="flex-1">
+                <label className="text-sm text-cyberpunk-cyan/80 mb-1 block">Font</label>
+                <Select 
+                  onValueChange={handleFontChange} 
+                  value={textElements.find(el => el.id === selectedTextId)?.font || 'Arial'}
+                >
+                  <SelectTrigger className="w-full bg-cyberpunk-black border-cyberpunk-cyan/30">
+                    <SelectValue placeholder="Select Font" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-cyberpunk-black border-cyberpunk-cyan/30">
+                    {fontOptions.map(font => (
+                      <SelectItem key={font.value} value={font.value} className="text-white">
+                        <span style={{ fontFamily: font.value }}>{font.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex-1">
+                <label className="text-sm text-cyberpunk-cyan/80 mb-1 block">Color</label>
+                <Select 
+                  onValueChange={handleColorChange} 
+                  value={textElements.find(el => el.id === selectedTextId)?.color || 'black'}
+                >
+                  <SelectTrigger className="w-full bg-cyberpunk-black border-cyberpunk-cyan/30">
+                    <SelectValue placeholder="Select Color" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-cyberpunk-black border-cyberpunk-cyan/30">
+                    {colorOptions.map(color => (
+                      <SelectItem key={color.value} value={color.value} className="text-white">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: color.value }}></div>
+                          <span>{color.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
         </div>
         
         <div className="md:col-span-1 flex flex-col gap-4">
@@ -530,4 +634,3 @@ const CertificateWorkspace = () => {
 };
 
 export default CertificateWorkspace;
-
