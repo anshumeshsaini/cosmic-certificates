@@ -2,13 +2,19 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Image as ImageIcon, Type, Download, Cpu, Upload as UploadIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
+import { Button } from '@/components/ui/button';
 
 const CertificateWorkspace = () => {
   const [certificateImage, setCertificateImage] = useState<string | null>(null);
   const [textElements, setTextElements] = useState<Array<{id: string, text: string, x: number, y: number}>>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [excelData, setExcelData] = useState<any[] | null>(null);
+  const [totalRecords, setTotalRecords] = useState(0);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const excelInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,6 +34,49 @@ const CertificateWorkspace = () => {
       simulateAIAnalysis();
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check if the file is an Excel file
+    const isExcelFile = [
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv'
+    ].includes(file.type);
+
+    if (!isExcelFile && !file.name.endsWith('.xlsx') && !file.name.endsWith('.csv')) {
+      toast.error('Please upload an Excel file (.xlsx) or CSV file');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = event.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const parsedData = XLSX.utils.sheet_to_json(worksheet);
+        
+        setExcelData(parsedData);
+        setTotalRecords(parsedData.length);
+        
+        toast.success(`Successfully loaded ${parsedData.length} records from Excel file`);
+        console.log("Parsed Excel data:", parsedData);
+      } catch (error) {
+        console.error("Error parsing Excel file:", error);
+        toast.error('Failed to parse Excel file. Please make sure it is a valid Excel file.');
+      }
+    };
+    
+    reader.onerror = () => {
+      toast.error('Failed to read Excel file');
+    };
+    
+    reader.readAsBinaryString(file);
   };
 
   const simulateAIAnalysis = () => {
@@ -90,11 +139,25 @@ const CertificateWorkspace = () => {
     fileInputRef.current?.click();
   };
 
+  const triggerExcelInput = () => {
+    excelInputRef.current?.click();
+  };
+
   const generateCertificates = () => {
+    if (!certificateImage) {
+      toast.error('Please upload a certificate template first');
+      return;
+    }
+    
+    if (!excelData || excelData.length === 0) {
+      toast.error('Please upload Excel data first');
+      return;
+    }
+    
     toast.success('Generating certificates...');
     // In a real app, this would handle the actual certificate generation
     setTimeout(() => {
-      toast.success('Certificate generated successfully!');
+      toast.success(`${excelData.length} certificates generated successfully!`);
     }, 1500);
   };
 
@@ -182,10 +245,41 @@ const CertificateWorkspace = () => {
             <h3 className="text-lg font-semibold text-cyberpunk-cyan mb-4">Data Upload</h3>
             <div className="border border-dashed border-cyberpunk-blue/40 rounded-lg p-4 text-center">
               <UploadIcon className="w-10 h-10 text-cyberpunk-cyan/40 mx-auto mb-2" />
-              <p className="text-sm text-cyberpunk-cyan/60 mb-2">Upload Excel or CSV</p>
-              <button className="cyberpunk-button text-sm w-full">
-                Select File
+              <p className="text-sm text-cyberpunk-cyan/60 mb-2">
+                {excelData ? 
+                  `${totalRecords} recipients loaded` : 
+                  'Upload Excel or CSV'
+                }
+              </p>
+              <input 
+                type="file" 
+                ref={excelInputRef} 
+                onChange={handleExcelUpload} 
+                className="hidden" 
+                accept=".xlsx,.xls,.csv"
+              />
+              <button 
+                onClick={triggerExcelInput} 
+                className="cyberpunk-button text-sm w-full"
+              >
+                {excelData ? 'Change Data File' : 'Select File'}
               </button>
+              
+              {excelData && excelData.length > 0 && (
+                <div className="mt-4 text-left">
+                  <p className="text-xs text-cyberpunk-cyan/60 mb-2">Preview:</p>
+                  <div className="bg-cyberpunk-black/60 p-2 rounded-md overflow-hidden text-xs">
+                    {Object.keys(excelData[0]).slice(0, 3).map(key => (
+                      <div key={key} className="truncate text-cyberpunk-cyan/80">
+                        {key}: {String(excelData[0][key])}
+                      </div>
+                    ))}
+                    {Object.keys(excelData[0]).length > 3 && (
+                      <div className="text-cyberpunk-cyan/50">+ more fields</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
@@ -203,12 +297,19 @@ const CertificateWorkspace = () => {
           
           <div className="cyberpunk-card mt-auto">
             <button 
-              className="w-full bg-gradient-to-r from-cyberpunk-blue to-cyberpunk-cyan text-white font-bold py-3 rounded-md hover:shadow-[0_0_15px_rgba(0,255,200,0.7)] transition-all"
+              className={`w-full font-bold py-3 rounded-md transition-all ${
+                !excelData || !certificateImage 
+                  ? 'bg-cyberpunk-blue/30 text-cyberpunk-cyan/50 cursor-not-allowed' 
+                  : 'bg-gradient-to-r from-cyberpunk-blue to-cyberpunk-cyan text-white hover:shadow-[0_0_15px_rgba(0,255,200,0.7)]'
+              }`}
               onClick={generateCertificates}
+              disabled={!excelData || !certificateImage}
             >
               Generate Certificates
             </button>
-            <p className="text-center text-cyberpunk-cyan/40 text-xs mt-2">AI optimized generation</p>
+            <p className="text-center text-cyberpunk-cyan/40 text-xs mt-2">
+              {!excelData ? 'Upload data to continue' : !certificateImage ? 'Upload template to continue' : `Ready to generate ${totalRecords} certificates`}
+            </p>
           </div>
         </div>
       </div>
