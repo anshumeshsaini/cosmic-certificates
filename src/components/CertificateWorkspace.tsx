@@ -1,7 +1,9 @@
+
 import React, { useState, useRef } from 'react';
 import { Upload, Image as ImageIcon, Type, Download, Cpu, Upload as UploadIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import JSZip from 'jszip';
 import { Button } from '@/components/ui/button';
 
 const CertificateWorkspace = () => {
@@ -10,6 +12,7 @@ const CertificateWorkspace = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [excelData, setExcelData] = useState<any[] | null>(null);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
@@ -60,11 +63,31 @@ const CertificateWorkspace = () => {
         const worksheet = workbook.Sheets[sheetName];
         const parsedData = XLSX.utils.sheet_to_json(worksheet);
         
-        setExcelData(parsedData);
-        setTotalRecords(parsedData.length);
+        // Extract just the names from the data
+        const processedData = parsedData.map((row: any) => {
+          // If the row has a "name" property, use it. Otherwise, get the second property (name)
+          const nameProperty = Object.keys(row).find(key => key.toLowerCase() === 'name');
+          let name;
+          
+          if (nameProperty) {
+            name = row[nameProperty];
+          } else {
+            // Get the second property value (assuming it's the name as per user's description)
+            const keys = Object.keys(row);
+            name = keys.length >= 2 ? row[keys[1]] : null;
+          }
+          
+          return { name };
+        });
         
-        toast.success(`Successfully loaded ${parsedData.length} records from Excel file`);
-        console.log("Parsed Excel data:", parsedData);
+        // Filter out any rows where name is null or undefined
+        const filteredData = processedData.filter(item => item.name);
+        
+        setExcelData(filteredData);
+        setTotalRecords(filteredData.length);
+        
+        toast.success(`Successfully loaded ${filteredData.length} names from Excel file`);
+        console.log("Parsed Excel data:", filteredData);
       } catch (error) {
         console.error("Error parsing Excel file:", error);
         toast.error('Failed to parse Excel file. Please make sure it is a valid Excel file.');
@@ -142,6 +165,57 @@ const CertificateWorkspace = () => {
     excelInputRef.current?.click();
   };
 
+  const createCertificateForName = (name: string): Promise<string> => {
+    return new Promise((resolve) => {
+      if (!certificateImage || !workspaceRef.current) {
+        resolve('');
+        return;
+      }
+      
+      // Create a canvas element
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve('');
+        return;
+      }
+      
+      // Create a new image object to draw on canvas
+      const img = new Image();
+      img.onload = () => {
+        // Set canvas dimensions to match the image
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Draw the image on canvas
+        ctx.drawImage(img, 0, 0);
+        
+        // Draw the text elements
+        ctx.font = '24px Arial';
+        ctx.fillStyle = 'black';
+        
+        textElements.forEach(element => {
+          const xPos = (element.x / 100) * canvas.width;
+          const yPos = (element.y / 100) * canvas.height;
+          
+          // Replace "RECIPIENT NAME" with the actual name
+          let text = element.text;
+          if (element.id === 'name' || text === 'RECIPIENT NAME') {
+            text = name;
+          }
+          
+          ctx.fillText(text, xPos, yPos);
+        });
+        
+        // Convert canvas to data URL
+        const dataUrl = canvas.toDataURL('image/png');
+        resolve(dataUrl);
+      };
+      
+      img.src = certificateImage;
+    });
+  };
+
   const handleExportAsPNG = () => {
     if (!certificateImage) {
       toast.error('Please upload a certificate template first');
@@ -209,7 +283,7 @@ const CertificateWorkspace = () => {
     }
   };
 
-  const handleBulkGenerate = () => {
+  const handleBulkGenerate = async () => {
     if (!certificateImage) {
       toast.error('Please upload a certificate template first');
       return;
@@ -220,33 +294,59 @@ const CertificateWorkspace = () => {
       return;
     }
     
-    toast.success('Starting bulk certificate generation...');
-    toast.info(`Generating ${excelData.length} certificates. This may take a moment.`);
-    
-    // In a real implementation, we would generate all certificates here
-    // For now, just show a success message after a delay to simulate processing
-    setTimeout(() => {
-      toast.success(`${excelData.length} certificates generated successfully!`);
-      toast.info('Download option will be available in the next update');
-    }, 1500);
+    try {
+      setIsGenerating(true);
+      toast.success('Starting bulk certificate generation...');
+      
+      // Create a new JSZip instance
+      const zip = new JSZip();
+      
+      // Generate certificates for each name in the Excel file
+      const certificatePromises = excelData.map((data: any, index) => {
+        return createCertificateForName(data.name).then((dataUrl) => {
+          if (dataUrl) {
+            // Convert data URL to blob
+            const base64Data = dataUrl.split(',')[1];
+            const binaryString = window.atob(base64Data);
+            const bytes = new Uint8Array(binaryString.length);
+            
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            const blob = new Blob([bytes], { type: 'image/png' });
+            
+            // Add the certificate to the zip file
+            zip.file(`certificate_${index + 1}_${data.name}.png`, blob);
+          }
+        });
+      });
+      
+      // Wait for all certificates to be generated
+      await Promise.all(certificatePromises);
+      
+      // Generate the zip file
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      
+      // Create a download link for the zip file
+      const downloadLink = document.createElement('a');
+      downloadLink.href = URL.createObjectURL(zipBlob);
+      downloadLink.download = 'certificates.zip';
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      
+      setIsGenerating(false);
+      toast.success(`${excelData.length} certificates generated and zipped successfully!`);
+    } catch (error) {
+      console.error('Error generating certificates:', error);
+      setIsGenerating(false);
+      toast.error('Failed to generate certificates');
+    }
   };
 
   const generateCertificates = () => {
-    if (!certificateImage) {
-      toast.error('Please upload a certificate template first');
-      return;
-    }
-    
-    if (!excelData || excelData.length === 0) {
-      toast.error('Please upload Excel data first');
-      return;
-    }
-    
-    toast.success('Generating certificates...');
-    // In a real app, this would handle the actual certificate generation
-    setTimeout(() => {
-      toast.success(`${excelData.length} certificates generated successfully!`);
-    }, 1500);
+    handleBulkGenerate();
   };
 
   return (
@@ -285,6 +385,15 @@ const CertificateWorkspace = () => {
                 <div className="text-center">
                   <Cpu className="w-12 h-12 text-cyberpunk-cyan mx-auto animate-spin" />
                   <p className="text-cyberpunk-cyan mt-4 animate-pulse">AI Analyzing Certificate...</p>
+                </div>
+              </div>
+            )}
+            
+            {isGenerating && (
+              <div className="absolute inset-0 flex items-center justify-center bg-cyberpunk-black/80 z-10">
+                <div className="text-center">
+                  <Cpu className="w-12 h-12 text-cyberpunk-cyan mx-auto animate-spin" />
+                  <p className="text-cyberpunk-cyan mt-4 animate-pulse">Generating Certificates...</p>
                 </div>
               </div>
             )}
@@ -333,7 +442,7 @@ const CertificateWorkspace = () => {
               <UploadIcon className="w-10 h-10 text-cyberpunk-cyan/40 mx-auto mb-2" />
               <p className="text-sm text-cyberpunk-cyan/60 mb-2">
                 {excelData ? 
-                  `${totalRecords} recipients loaded` : 
+                  `${totalRecords} names loaded` : 
                   'Upload Excel or CSV'
                 }
               </p>
@@ -355,13 +464,13 @@ const CertificateWorkspace = () => {
                 <div className="mt-4 text-left">
                   <p className="text-xs text-cyberpunk-cyan/60 mb-2">Preview:</p>
                   <div className="bg-cyberpunk-black/60 p-2 rounded-md overflow-hidden text-xs">
-                    {Object.keys(excelData[0]).slice(0, 3).map(key => (
-                      <div key={key} className="truncate text-cyberpunk-cyan/80">
-                        {key}: {String(excelData[0][key])}
+                    {excelData.slice(0, 3).map((item: any, index: number) => (
+                      <div key={index} className="truncate text-cyberpunk-cyan/80">
+                        Name: {item.name}
                       </div>
                     ))}
-                    {Object.keys(excelData[0]).length > 3 && (
-                      <div className="text-cyberpunk-cyan/50">+ more fields</div>
+                    {excelData.length > 3 && (
+                      <div className="text-cyberpunk-cyan/50">+ {excelData.length - 3} more names</div>
                     )}
                   </div>
                 </div>
@@ -388,11 +497,12 @@ const CertificateWorkspace = () => {
                 PDF
               </button>
               <button 
-                className="cyberpunk-button w-full text-sm justify-center"
+                className="cyberpunk-button w-full text-sm justify-center flex items-center gap-2"
                 onClick={handleBulkGenerate}
-                disabled={!certificateImage || !excelData}
+                disabled={!certificateImage || !excelData || isGenerating}
               >
-                Bulk Generate
+                <Download className="w-4 h-4" />
+                <span>Generate ZIP</span>
               </button>
             </div>
           </div>
@@ -400,17 +510,17 @@ const CertificateWorkspace = () => {
           <div className="cyberpunk-card mt-auto">
             <button 
               className={`w-full font-bold py-3 rounded-md transition-all ${
-                !excelData || !certificateImage 
+                !excelData || !certificateImage || isGenerating
                   ? 'bg-cyberpunk-blue/30 text-cyberpunk-cyan/50 cursor-not-allowed' 
                   : 'bg-gradient-to-r from-cyberpunk-blue to-cyberpunk-cyan text-white hover:shadow-[0_0_15px_rgba(0,255,200,0.7)]'
               }`}
               onClick={generateCertificates}
-              disabled={!excelData || !certificateImage}
+              disabled={!excelData || !certificateImage || isGenerating}
             >
-              Generate Certificates
+              {isGenerating ? 'Generating...' : 'Generate Certificates'}
             </button>
             <p className="text-center text-cyberpunk-cyan/40 text-xs mt-2">
-              {!excelData ? 'Upload data to continue' : !certificateImage ? 'Upload template to continue' : `Ready to generate ${totalRecords} certificates`}
+              {!excelData ? 'Upload data to continue' : !certificateImage ? 'Upload template to continue' : isGenerating ? 'Processing certificates...' : `Ready to generate ${totalRecords} certificates`}
             </p>
           </div>
         </div>
@@ -420,3 +530,4 @@ const CertificateWorkspace = () => {
 };
 
 export default CertificateWorkspace;
+
