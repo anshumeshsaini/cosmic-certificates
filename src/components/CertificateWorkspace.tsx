@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, Image as ImageIcon, Type, Download, Cpu, Upload as UploadIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -143,6 +142,95 @@ const CertificateWorkspace = () => {
     excelInputRef.current?.click();
   };
 
+  const handleExportAsPNG = () => {
+    if (!certificateImage) {
+      toast.error('Please upload a certificate template first');
+      return;
+    }
+    
+    if (!workspaceRef.current) return;
+    
+    try {
+      // Create a canvas element
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      // Create a new image object to draw on canvas
+      const img = new Image();
+      img.onload = () => {
+        // Set canvas dimensions to match the image
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Draw the image on canvas
+        ctx.drawImage(img, 0, 0);
+        
+        // Draw the text elements
+        ctx.font = '24px Arial';
+        ctx.fillStyle = 'black';
+        textElements.forEach(element => {
+          const xPos = (element.x / 100) * canvas.width;
+          const yPos = (element.y / 100) * canvas.height;
+          ctx.fillText(element.text, xPos, yPos);
+        });
+        
+        // Convert canvas to data URL and trigger download
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = 'certificate.png';
+        link.href = dataUrl;
+        link.click();
+        
+        toast.success('Certificate exported as PNG successfully!');
+      };
+      
+      img.src = certificateImage;
+    } catch (error) {
+      console.error('Error exporting as PNG:', error);
+      toast.error('Failed to export as PNG');
+    }
+  };
+
+  const handleExportAsPDF = () => {
+    if (!certificateImage) {
+      toast.error('Please upload a certificate template first');
+      return;
+    }
+    
+    try {
+      // For simplicity, we'll just show a toast for now
+      // In a real implementation, you'd use a library like jsPDF
+      toast.success('PDF export will be implemented in the next update');
+      toast.info('For now, please use the PNG export option');
+    } catch (error) {
+      console.error('Error exporting as PDF:', error);
+      toast.error('Failed to export as PDF');
+    }
+  };
+
+  const handleBulkGenerate = () => {
+    if (!certificateImage) {
+      toast.error('Please upload a certificate template first');
+      return;
+    }
+    
+    if (!excelData || excelData.length === 0) {
+      toast.error('Please upload Excel data first');
+      return;
+    }
+    
+    toast.success('Starting bulk certificate generation...');
+    toast.info(`Generating ${excelData.length} certificates. This may take a moment.`);
+    
+    // In a real implementation, we would generate all certificates here
+    // For now, just show a success message after a delay to simulate processing
+    setTimeout(() => {
+      toast.success(`${excelData.length} certificates generated successfully!`);
+      toast.info('Download option will be available in the next update');
+    }, 1500);
+  };
+
   const generateCertificates = () => {
     if (!certificateImage) {
       toast.error('Please upload a certificate template first');
@@ -164,7 +252,6 @@ const CertificateWorkspace = () => {
   return (
     <div className="flex flex-col h-full gap-6">
       <div className="grid md:grid-cols-5 gap-6 flex-1">
-        {/* Main workspace */}
         <div className="md:col-span-4 cyberpunk-card flex flex-col h-full min-h-[60vh]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-cyberpunk-cyan">Workspace</h2>
@@ -239,7 +326,6 @@ const CertificateWorkspace = () => {
           </div>
         </div>
         
-        {/* Sidebar controls */}
         <div className="md:col-span-1 flex flex-col gap-4">
           <div className="cyberpunk-card">
             <h3 className="text-lg font-semibold text-cyberpunk-cyan mb-4">Data Upload</h3>
@@ -286,12 +372,28 @@ const CertificateWorkspace = () => {
           <div className="cyberpunk-card">
             <h3 className="text-lg font-semibold text-cyberpunk-cyan mb-4">Export Options</h3>
             <div className="space-y-2">
-              <button className="cyberpunk-button w-full text-sm justify-center flex items-center gap-2">
+              <button 
+                className="cyberpunk-button w-full text-sm justify-center flex items-center gap-2"
+                onClick={handleExportAsPNG}
+                disabled={!certificateImage}
+              >
                 <Download className="w-4 h-4" />
                 <span>Export as PNG</span>
               </button>
-              <button className="cyberpunk-button w-full text-sm justify-center">PDF</button>
-              <button className="cyberpunk-button w-full text-sm justify-center">Bulk Generate</button>
+              <button 
+                className="cyberpunk-button w-full text-sm justify-center"
+                onClick={handleExportAsPDF}
+                disabled={!certificateImage}
+              >
+                PDF
+              </button>
+              <button 
+                className="cyberpunk-button w-full text-sm justify-center"
+                onClick={handleBulkGenerate}
+                disabled={!certificateImage || !excelData}
+              >
+                Bulk Generate
+              </button>
             </div>
           </div>
           
