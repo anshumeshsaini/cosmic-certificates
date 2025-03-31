@@ -1,11 +1,14 @@
-
 import React, { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, Type, Download, Cpu, Upload as UploadIcon, Palette } from 'lucide-react';
+import { Upload, Image as ImageIcon, Type, Download, Cpu, Upload as UploadIcon, Palette, Edit, Eye, Trash2, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 const CertificateWorkspace = () => {
   const [certificateImage, setCertificateImage] = useState<string | null>(null);
@@ -22,6 +25,10 @@ const CertificateWorkspace = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [previewName, setPreviewName] = useState('John Doe');
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
@@ -62,7 +69,6 @@ const CertificateWorkspace = () => {
       setCertificateImage(event.target?.result as string);
       toast.success('Certificate template uploaded!');
       
-      // Simulate AI analysis
       simulateAIAnalysis();
     };
     reader.readAsDataURL(file);
@@ -72,7 +78,6 @@ const CertificateWorkspace = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check if the file is an Excel file
     const isExcelFile = [
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -93,16 +98,13 @@ const CertificateWorkspace = () => {
         const worksheet = workbook.Sheets[sheetName];
         const parsedData = XLSX.utils.sheet_to_json(worksheet);
         
-        // Extract just the names from the data
         const processedData = parsedData.map((row: any) => {
-          // If the row has a "name" property, use it. Otherwise, get the second property (name)
           const nameProperty = Object.keys(row).find(key => key.toLowerCase() === 'name');
           let name;
           
           if (nameProperty) {
             name = row[nameProperty];
           } else {
-            // Get the second property value (assuming it's the name as per user's description)
             const keys = Object.keys(row);
             name = keys.length >= 2 ? row[keys[1]] : null;
           }
@@ -110,7 +112,6 @@ const CertificateWorkspace = () => {
           return { name };
         });
         
-        // Filter out any rows where name is null or undefined
         const filteredData = processedData.filter(item => item.name);
         
         setExcelData(filteredData);
@@ -134,11 +135,9 @@ const CertificateWorkspace = () => {
   const simulateAIAnalysis = () => {
     setIsAnalyzing(true);
     
-    // Simulating AI processing delay
     setTimeout(() => {
       setIsAnalyzing(false);
       
-      // Add suggested text elements
       setTextElements([
         { id: 'name', text: 'RECIPIENT NAME', x: 50, y: 40, font: 'Arial', color: 'black' },
         { id: 'course', text: 'COURSE TITLE', x: 50, y: 55, font: 'Arial', color: 'black' },
@@ -160,7 +159,20 @@ const CertificateWorkspace = () => {
     };
     
     setTextElements([...textElements, newElement]);
+    setEditingTextId(newElement.id);
+    setEditingText(newElement.text);
     toast.success('Text element added');
+  };
+
+  const handleDeleteText = (id: string) => {
+    setTextElements(textElements.filter(el => el.id !== id));
+    if (selectedTextId === id) {
+      setSelectedTextId(null);
+    }
+    if (editingTextId === id) {
+      setEditingTextId(null);
+    }
+    toast.success('Text element deleted');
   };
 
   const handleTextDragStart = (e: React.DragEvent, id: string) => {
@@ -176,7 +188,6 @@ const CertificateWorkspace = () => {
     
     if (!element || !workspaceRef.current) return;
     
-    // Calculate position relative to workspace
     const rect = workspaceRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -192,6 +203,7 @@ const CertificateWorkspace = () => {
 
   const handleTextClick = (id: string) => {
     setSelectedTextId(id);
+    setEditingTextId(null);
   };
 
   const handleFontChange = (value: string) => {
@@ -210,6 +222,38 @@ const CertificateWorkspace = () => {
     ));
   };
 
+  const handleEditText = (id: string) => {
+    const element = textElements.find(el => el.id === id);
+    if (element) {
+      setEditingTextId(id);
+      setEditingText(element.text);
+    }
+  };
+
+  const handleSaveText = () => {
+    if (!editingTextId) return;
+    
+    setTextElements(textElements.map(el => 
+      el.id === editingTextId ? { ...el, text: editingText } : el
+    ));
+    
+    setEditingTextId(null);
+    toast.success('Text updated successfully');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingTextId(null);
+  };
+
+  const togglePreviewMode = () => {
+    setPreviewMode(!previewMode);
+    if (!previewMode) {
+      toast.info('Preview mode activated. Using sample name: ' + previewName);
+    } else {
+      toast.info('Preview mode deactivated');
+    }
+  };
+
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
@@ -225,7 +269,6 @@ const CertificateWorkspace = () => {
         return;
       }
       
-      // Create a canvas element
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) {
@@ -233,26 +276,20 @@ const CertificateWorkspace = () => {
         return;
       }
       
-      // Create a new image object to draw on canvas
       const img = new Image();
       img.onload = () => {
-        // Set canvas dimensions to match the image
         canvas.width = img.width;
         canvas.height = img.height;
         
-        // Draw the image on canvas
         ctx.drawImage(img, 0, 0);
         
-        // Draw the text elements
         textElements.forEach(element => {
           const xPos = (element.x / 100) * canvas.width;
           const yPos = (element.y / 100) * canvas.height;
           
-          // Apply font and color
           ctx.font = `24px ${element.font}`;
           ctx.fillStyle = element.color;
           
-          // Replace "RECIPIENT NAME" with the actual name
           let text = element.text;
           if (element.id === 'name' || text === 'RECIPIENT NAME') {
             text = name;
@@ -261,7 +298,6 @@ const CertificateWorkspace = () => {
           ctx.fillText(text, xPos, yPos);
         });
         
-        // Convert canvas to data URL
         const dataUrl = canvas.toDataURL('image/png');
         resolve(dataUrl);
       };
@@ -279,33 +315,26 @@ const CertificateWorkspace = () => {
     if (!workspaceRef.current) return;
     
     try {
-      // Create a canvas element
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       
-      // Create a new image object to draw on canvas
       const img = new Image();
       img.onload = () => {
-        // Set canvas dimensions to match the image
         canvas.width = img.width;
         canvas.height = img.height;
         
-        // Draw the image on canvas
         ctx.drawImage(img, 0, 0);
         
-        // Draw the text elements
         textElements.forEach(element => {
           const xPos = (element.x / 100) * canvas.width;
           const yPos = (element.y / 100) * canvas.height;
           
-          // Apply font and color
           ctx.font = `24px ${element.font}`;
           ctx.fillStyle = element.color;
           ctx.fillText(element.text, xPos, yPos);
         });
         
-        // Convert canvas to data URL and trigger download
         const dataUrl = canvas.toDataURL('image/png');
         const link = document.createElement('a');
         link.download = 'certificate.png';
@@ -329,8 +358,6 @@ const CertificateWorkspace = () => {
     }
     
     try {
-      // For simplicity, we'll just show a toast for now
-      // In a real implementation, you'd use a library like jsPDF
       toast.success('PDF export will be implemented in the next update');
       toast.info('For now, please use the PNG export option');
     } catch (error) {
@@ -354,14 +381,11 @@ const CertificateWorkspace = () => {
       setIsGenerating(true);
       toast.success('Starting bulk certificate generation...');
       
-      // Create a new JSZip instance
       const zip = new JSZip();
       
-      // Generate certificates for each name in the Excel file
       const certificatePromises = excelData.map((data: any, index) => {
         return createCertificateForName(data.name).then((dataUrl) => {
           if (dataUrl) {
-            // Convert data URL to blob
             const base64Data = dataUrl.split(',')[1];
             const binaryString = window.atob(base64Data);
             const bytes = new Uint8Array(binaryString.length);
@@ -372,19 +396,15 @@ const CertificateWorkspace = () => {
             
             const blob = new Blob([bytes], { type: 'image/png' });
             
-            // Add the certificate to the zip file
             zip.file(`certificate_${index + 1}_${data.name}.png`, blob);
           }
         });
       });
       
-      // Wait for all certificates to be generated
       await Promise.all(certificatePromises);
       
-      // Generate the zip file
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       
-      // Create a download link for the zip file
       const downloadLink = document.createElement('a');
       downloadLink.href = URL.createObjectURL(zipBlob);
       downloadLink.download = 'certificates.zip';
@@ -405,6 +425,85 @@ const CertificateWorkspace = () => {
     handleBulkGenerate();
   };
 
+  const renderTextElement = (element: { id: string, text: string, x: number, y: number, font: string, color: string }) => {
+    let displayText = element.text;
+    if (previewMode && (element.id === 'name' || element.text === 'RECIPIENT NAME')) {
+      displayText = previewName;
+    }
+
+    if (editingTextId === element.id) {
+      return (
+        <div 
+          key={element.id}
+          className="absolute bg-cyberpunk-black/80 backdrop-blur-sm border border-cyberpunk-cyan px-3 py-1 rounded flex items-center gap-2"
+          style={{ 
+            left: `${element.x}%`, 
+            top: `${element.y}%`, 
+            transform: 'translate(-50%, -50%)',
+            zIndex: 100
+          }}
+        >
+          <Input 
+            value={editingText} 
+            onChange={(e) => setEditingText(e.target.value)}
+            className="w-40 bg-cyberpunk-black border-cyberpunk-cyan/50 text-white"
+            autoFocus
+          />
+          <button 
+            onClick={handleSaveText}
+            className="p-1 hover:bg-cyberpunk-cyan/20 rounded"
+          >
+            <Check className="w-4 h-4 text-cyberpunk-cyan" />
+          </button>
+          <button 
+            onClick={handleCancelEdit}
+            className="p-1 hover:bg-red-500/20 rounded"
+          >
+            <X className="w-4 h-4 text-red-400" />
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div 
+        key={element.id}
+        className={`absolute cursor-move px-3 py-1 rounded ${selectedTextId === element.id ? 'bg-cyberpunk-black/60 backdrop-blur-sm border border-cyberpunk-cyan' : 'bg-cyberpunk-black/40 backdrop-blur-sm border border-cyberpunk-cyan/50'}`}
+        style={{ 
+          left: `${element.x}%`, 
+          top: `${element.y}%`, 
+          transform: 'translate(-50%, -50%)',
+          fontFamily: element.font,
+          color: element.color
+        }}
+        draggable={!previewMode}
+        onDragStart={(e) => !previewMode && handleTextDragStart(e, element.id)}
+        onClick={() => !previewMode && handleTextClick(element.id)}
+      >
+        <div className="flex items-center gap-1">
+          <span>{displayText}</span>
+          
+          {!previewMode && selectedTextId === element.id && (
+            <div className="flex gap-1 ml-2">
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleEditText(element.id); }}
+                className="p-1 hover:bg-cyberpunk-cyan/20 rounded"
+              >
+                <Edit className="w-3 h-3 text-cyberpunk-cyan" />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleDeleteText(element.id); }}
+                className="p-1 hover:bg-red-500/20 rounded"
+              >
+                <Trash2 className="w-3 h-3 text-red-400" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full gap-6">
       <div className="grid md:grid-cols-5 gap-6 flex-1">
@@ -412,11 +511,26 @@ const CertificateWorkspace = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-cyberpunk-cyan">Workspace</h2>
             <div className="flex gap-2">
-              <button onClick={handleAddText} className="cyberpunk-button text-sm flex items-center gap-1">
+              <button 
+                onClick={togglePreviewMode}
+                className={`cyberpunk-button text-sm flex items-center gap-1 ${previewMode ? 'bg-cyberpunk-cyan/20' : ''}`}
+              >
+                <Eye className="w-4 h-4" />
+                <span>{previewMode ? 'Exit Preview' : 'Preview'}</span>
+              </button>
+              <button 
+                onClick={handleAddText} 
+                className="cyberpunk-button text-sm flex items-center gap-1"
+                disabled={previewMode}
+              >
                 <Type className="w-4 h-4" />
                 <span>Add Text</span>
               </button>
-              <button onClick={triggerFileInput} className="cyberpunk-button text-sm flex items-center gap-1">
+              <button 
+                onClick={triggerFileInput} 
+                className="cyberpunk-button text-sm flex items-center gap-1"
+                disabled={previewMode}
+              >
                 <ImageIcon className="w-4 h-4" />
                 <span>Template</span>
               </button>
@@ -433,8 +547,8 @@ const CertificateWorkspace = () => {
           <div 
             ref={workspaceRef}
             className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-900 to-cyberpunk-black border border-cyberpunk-blue/20 rounded-lg overflow-hidden relative"
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
+            onDrop={!previewMode ? handleDrop : undefined}
+            onDragOver={!previewMode ? handleDragOver : undefined}
           >
             {isAnalyzing && (
               <div className="absolute inset-0 flex items-center justify-center bg-cyberpunk-black/80 z-10">
@@ -454,6 +568,19 @@ const CertificateWorkspace = () => {
               </div>
             )}
             
+            {previewMode && (
+              <div className="absolute top-2 right-2 bg-cyberpunk-black/80 backdrop-blur-sm border border-cyberpunk-cyan/50 rounded-md p-2 z-10">
+                <div className="flex items-center gap-2">
+                  <span className="text-cyberpunk-cyan text-xs">Preview Name:</span>
+                  <Input 
+                    value={previewName}
+                    onChange={(e) => setPreviewName(e.target.value)}
+                    className="w-40 h-7 text-sm bg-cyberpunk-black border-cyberpunk-cyan/50 text-white"
+                  />
+                </div>
+              </div>
+            )}
+            
             {certificateImage ? (
               <div className="relative w-full h-full flex items-center justify-center">
                 <img 
@@ -462,24 +589,7 @@ const CertificateWorkspace = () => {
                   className="max-w-full max-h-full object-contain"
                 />
                 
-                {textElements.map((element) => (
-                  <div 
-                    key={element.id}
-                    className={`absolute cursor-move px-3 py-1 rounded ${selectedTextId === element.id ? 'bg-cyberpunk-black/60 backdrop-blur-sm border border-cyberpunk-cyan' : 'bg-cyberpunk-black/40 backdrop-blur-sm border border-cyberpunk-cyan/50'}`}
-                    style={{ 
-                      left: `${element.x}%`, 
-                      top: `${element.y}%`, 
-                      transform: 'translate(-50%, -50%)',
-                      fontFamily: element.font,
-                      color: element.color
-                    }}
-                    draggable
-                    onDragStart={(e) => handleTextDragStart(e, element.id)}
-                    onClick={() => handleTextClick(element.id)}
-                  >
-                    {element.text}
-                  </div>
-                ))}
+                {textElements.map(renderTextElement)}
               </div>
             ) : (
               <div className="text-center p-6">
@@ -493,7 +603,7 @@ const CertificateWorkspace = () => {
             )}
           </div>
           
-          {selectedTextId && (
+          {selectedTextId && !previewMode && (
             <div className="flex gap-4 mt-4 p-4 bg-cyberpunk-black/60 rounded-lg border border-cyberpunk-cyan/30">
               <div className="flex-1">
                 <label className="text-sm text-cyberpunk-cyan/80 mb-1 block">Font</label>
@@ -534,6 +644,27 @@ const CertificateWorkspace = () => {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              
+              <div className="flex-1">
+                <label className="text-sm text-cyberpunk-cyan/80 mb-1 block">Text Content</label>
+                <div className="flex gap-2">
+                  <Input 
+                    value={textElements.find(el => el.id === selectedTextId)?.text || ''}
+                    onChange={(e) => {
+                      setTextElements(textElements.map(el => 
+                        el.id === selectedTextId ? { ...el, text: e.target.value } : el
+                      ));
+                    }}
+                    className="w-full bg-cyberpunk-black border-cyberpunk-cyan/30 text-white"
+                  />
+                  <button 
+                    onClick={() => handleDeleteText(selectedTextId)}
+                    className="bg-red-500/20 hover:bg-red-500/30 p-2 rounded flex items-center justify-center"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -629,6 +760,43 @@ const CertificateWorkspace = () => {
           </div>
         </div>
       </div>
+
+      <Sheet>
+        <SheetTrigger asChild>
+          <button className="fixed bottom-4 right-4 bg-cyberpunk-cyan/80 text-cyberpunk-black p-2 rounded-full z-20 hover:bg-cyberpunk-cyan shadow-lg hover:shadow-[0_0_15px_rgba(0,255,200,0.5)]">
+            <Edit className="h-5 w-5" />
+          </button>
+        </SheetTrigger>
+        <SheetContent className="bg-cyberpunk-black/95 border-cyberpunk-cyan/30">
+          <SheetHeader>
+            <SheetTitle className="text-cyberpunk-cyan">Certificate Generator Tips</SheetTitle>
+            <SheetDescription className="text-cyberpunk-cyan/70">
+              How to create powerful certificates in minutes
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-6">
+            <div className="space-y-2">
+              <h3 className="text-cyberpunk-cyan font-medium">Text Management</h3>
+              <ul className="text-sm text-cyberpunk-cyan/70 space-y-2 ml-5 list-disc">
+                <li>Click <b>Add Text</b> to add new text elements</li>
+                <li>Click any text to select and edit its properties</li>
+                <li>Drag and drop text elements to position them</li>
+                <li>Use <b>Preview</b> mode to see how certificates will look with real data</li>
+                <li>Click the edit icon on a text element to change its content</li>
+                <li>Use the trash icon to delete unwanted text elements</li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-cyberpunk-cyan font-medium">Certificate Generation</h3>
+              <ul className="text-sm text-cyberpunk-cyan/70 space-y-2 ml-5 list-disc">
+                <li>Upload an Excel file with names in the second column</li>
+                <li>Use <b>Generate Certificates</b> to create a ZIP with all certificates</li>
+                <li>Each certificate will replace "RECIPIENT NAME" with the name from Excel</li>
+              </ul>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
