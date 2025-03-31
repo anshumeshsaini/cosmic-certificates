@@ -16,8 +16,13 @@ const Index = () => {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="py-16 px-4">
-          <div className="container mx-auto">
+        <section className="pt-16 pb-20 px-4 relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"></div>
+          </div>
+          
+          <div className="container mx-auto max-w-7xl relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
@@ -50,19 +55,21 @@ const Index = () => {
                 </div>
                 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button className="cyberpunk-button flex items-center justify-center gap-2">
+                  <button onClick={() => document.getElementById('certificate-workspace')?.scrollIntoView({ behavior: 'smooth' })} 
+                    className="cyberpunk-button flex items-center justify-center gap-2">
                     <span>Start Creating</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
-                  <button className="cyberpunk-button flex items-center justify-center gap-2 bg-transparent hover:bg-blue-500/20">
+                  <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="cyberpunk-button flex items-center justify-center gap-2 bg-transparent hover:bg-blue-500/20">
                     <span>View Templates</span>
                   </button>
                 </div>
               </div>
               
-              <div className="relative">
+              <div className="relative" id="certificate-workspace">
                 <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/20 via-blue-400/20 to-blue-500/20 rounded-lg blur-xl opacity-70"></div>
-                <div className="relative bg-cyberpunk-black/80 backdrop-blur-sm p-8 rounded-lg border border-blue-400/30">
+                <div className="relative bg-cyberpunk-black/80 backdrop-blur-sm p-4 md:p-8 rounded-lg border border-blue-400/30">
                   <h2 className="text-2xl font-bold mb-6 text-white">Try the Certificate Generator</h2>
                   <CertificateWorkspace />
                 </div>
@@ -72,13 +79,19 @@ const Index = () => {
         </section>
         
         {/* Features Section */}
-        <Features />
+        <section id="features">
+          <Features />
+        </section>
         
         {/* Testimonials Section */}
-        <Testimonials />
+        <section id="testimonials">
+          <Testimonials />
+        </section>
         
         {/* FAQ Section */}
-        <FAQ />
+        <section id="faq">
+          <FAQ />
+        </section>
         
         {/* CTA Section */}
         <section className="py-16 px-4 relative overflow-hidden">
@@ -89,7 +102,9 @@ const Index = () => {
               <p className="text-white/80 mb-8 max-w-2xl mx-auto">
                 Join thousands of businesses and organizations that trust our platform for their certificate needs.
               </p>
-              <button className="cyberpunk-button mx-auto">
+              <button 
+                onClick={() => document.getElementById('certificate-workspace')?.scrollIntoView({ behavior: 'smooth' })}
+                className="cyberpunk-button mx-auto">
                 Get Started Now
               </button>
             </div>
