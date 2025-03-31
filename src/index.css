@@ -14,7 +14,7 @@
     --popover: 222 47% 11%;
     --popover-foreground: 213 31% 91%;
 
-    --primary: 162 100% 50%;
+    --primary: 210 100% 50%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -44,9 +44,10 @@
 
   body {
     @apply bg-cyberpunk-black text-foreground;
-    background-image: radial-gradient(circle at 50% 50%, rgba(14, 79, 255, 0.05) 0%, rgba(0, 0, 0, 0) 70%),
-                     radial-gradient(circle at 80% 20%, rgba(121, 40, 202, 0.05) 0%, rgba(0, 0, 0, 0) 70%),
-                     radial-gradient(circle at 20% 80%, rgba(0, 255, 200, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
+    background-image: 
+      radial-gradient(circle at 50% 50%, rgba(20, 70, 160, 0.08) 0%, rgba(0, 0, 0, 0) 70%),
+      radial-gradient(circle at 80% 20%, rgba(50, 80, 180, 0.08) 0%, rgba(0, 0, 0, 0) 70%),
+      radial-gradient(circle at 20% 80%, rgba(30, 110, 190, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
     background-size: 100% 100%;
     background-position: center;
     background-attachment: fixed;
@@ -63,19 +64,19 @@
 
 @layer components {
   .cyberpunk-card {
-    @apply relative bg-cyberpunk-black/60 backdrop-blur-md border border-cyberpunk-cyan/30 p-6 rounded-lg overflow-hidden;
+    @apply relative bg-white/5 backdrop-blur-md border border-blue-400/20 p-6 rounded-lg overflow-hidden shadow-lg;
   }
   
   .cyberpunk-card::before {
     content: "";
-    @apply absolute -inset-[1px] bg-gradient-to-r from-cyberpunk-blue via-cyberpunk-cyan to-cyberpunk-purple rounded-lg;
+    @apply absolute -inset-[1px] bg-gradient-to-r from-blue-600 via-blue-400 to-blue-500 rounded-lg;
     @apply z-[-1] opacity-30;
   }
   
   .cyberpunk-button {
-    @apply relative overflow-hidden bg-cyberpunk-black text-cyberpunk-cyan border border-cyberpunk-cyan/50 
-           px-6 py-2 rounded-md transition-all duration-300 hover:bg-cyberpunk-cyan/10 
-           hover:shadow-[0_0_15px_rgba(0,255,200,0.5)] font-medium;
+    @apply relative overflow-hidden bg-blue-600 text-white border border-blue-400/50 
+           px-6 py-2 rounded-md transition-all duration-300 hover:bg-blue-700 
+           hover:shadow-[0_0_15px_rgba(30,144,255,0.5)] font-medium;
   }
   
   .cyberpunk-button::after {
@@ -89,7 +90,7 @@
   }
   
   .neon-text {
-    @apply text-cyberpunk-cyan animate-text-glow;
+    @apply text-blue-400 animate-text-glow;
   }
   
   .glass-panel {
@@ -108,5 +109,22 @@
   .scanning-effect::after {
     content: "";
     @apply absolute top-[-200%] left-0 w-full h-[400%] bg-scanning-line animate-scanning;
+  }
+
+  .pro-card {
+    @apply bg-white/5 backdrop-blur-lg border border-blue-400/20 rounded-lg p-6 transition-all duration-300
+           hover:shadow-[0_0_20px_rgba(30,144,255,0.2)];
+  }
+
+  .section-title {
+    @apply text-2xl font-bold mb-6 text-white;
+  }
+
+  .testimonial-card {
+    @apply bg-white/5 backdrop-blur-lg border border-blue-400/20 rounded-lg p-6 shadow-lg;
+  }
+
+  .faq-item {
+    @apply border border-blue-400/20 rounded-lg p-4 mb-4 bg-white/5 backdrop-blur-lg;
   }
 }
