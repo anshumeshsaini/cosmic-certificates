@@ -1,10 +1,41 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
+    --background: 213 100% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 213 100% 98%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 213 100% 98%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220 8.9% 46.1%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 224.3 76.3% 48%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
     --background: 222 47% 11%;
     --foreground: 213 31% 91%;
 
@@ -14,7 +45,7 @@
     --popover: 222 47% 11%;
     --popover-foreground: 213 31% 91%;
 
-    --primary: 162 100% 50%;
+    --primary: 221 83% 53%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -32,8 +63,6 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
-
-    --radius: 0.75rem;
   }
 }
 
@@ -43,10 +72,10 @@
   }
 
   body {
-    @apply bg-cyberpunk-black text-foreground;
-    background-image: radial-gradient(circle at 50% 50%, rgba(14, 79, 255, 0.05) 0%, rgba(0, 0, 0, 0) 70%),
-                     radial-gradient(circle at 80% 20%, rgba(121, 40, 202, 0.05) 0%, rgba(0, 0, 0, 0) 70%),
-                     radial-gradient(circle at 20% 80%, rgba(0, 255, 200, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
+    @apply bg-background text-foreground;
+    background-image: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.05) 0%, rgba(0, 0, 0, 0) 70%),
+                     radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, rgba(0, 0, 0, 0) 70%),
+                     radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
     background-size: 100% 100%;
     background-position: center;
     background-attachment: fixed;
@@ -63,42 +92,28 @@
 
 @layer components {
   .cyberpunk-card {
-    @apply relative bg-cyberpunk-black/60 backdrop-blur-md border border-cyberpunk-cyan/30 p-6 rounded-lg overflow-hidden;
+    @apply relative bg-white/90 dark:bg-blue-950/80 backdrop-blur-md border border-blue-200 dark:border-blue-800/30 p-6 rounded-lg overflow-hidden shadow-sm;
   }
   
   .cyberpunk-card::before {
     content: "";
-    @apply absolute -inset-[1px] bg-gradient-to-r from-cyberpunk-blue via-cyberpunk-cyan to-cyberpunk-purple rounded-lg;
-    @apply z-[-1] opacity-30;
+    @apply absolute -inset-[1px] bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 dark:from-blue-700 dark:via-blue-600 dark:to-blue-500 rounded-lg;
+    @apply z-[-1] opacity-10;
   }
   
   .cyberpunk-button {
-    @apply relative overflow-hidden bg-cyberpunk-black text-cyberpunk-cyan border border-cyberpunk-cyan/50 
-           px-6 py-2 rounded-md transition-all duration-300 hover:bg-cyberpunk-cyan/10 
-           hover:shadow-[0_0_15px_rgba(0,255,200,0.5)] font-medium;
-  }
-  
-  .cyberpunk-button::after {
-    content: "";
-    @apply absolute top-0 left-[-100%] w-full h-full bg-neon-glow opacity-50;
-    @apply transition-transform duration-500 ease-out;
-  }
-  
-  .cyberpunk-button:hover::after {
-    @apply transform translate-x-full;
+    @apply relative overflow-hidden bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700 
+           px-6 py-2 rounded-md transition-all duration-300 hover:bg-blue-200 dark:hover:bg-blue-800 
+           hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] font-medium;
   }
   
   .neon-text {
-    @apply text-cyberpunk-cyan animate-text-glow;
+    @apply text-blue-600 dark:text-blue-400 animate-text-glow;
   }
   
   .glass-panel {
-    @apply bg-gradient-to-br from-white/5 to-white/10 backdrop-blur-lg 
-           border border-white/10 rounded-lg shadow-lg;
-  }
-  
-  .grid-bg {
-    @apply bg-cyberpunk-grid bg-[length:40px_40px];
+    @apply bg-gradient-to-br from-white/80 to-white/90 dark:from-blue-950/80 dark:to-blue-900/90 backdrop-blur-lg 
+           border border-blue-100 dark:border-blue-800/50 rounded-lg shadow-lg;
   }
   
   .scanning-effect {
@@ -109,4 +124,61 @@
     content: "";
     @apply absolute top-[-200%] left-0 w-full h-[400%] bg-scanning-line animate-scanning;
   }
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-glow {
+	'0%, 100%': { 
+		boxShadow: '0 0 5px 0px rgba(0, 255, 200, 0.7), 0 0 10px 3px rgba(0, 255, 200, 0.5)'
+	},
+	'50%': { 
+		boxShadow: '0 0 10px 2px rgba(0, 255, 200, 0.9), 0 0 15px 5px rgba(0, 255, 200, 0.7)'
+	}
+}
+@keyframes text-glow {
+	'0%, 100%': { 
+		textShadow: '0 0 5px rgba(0, 255, 200, 0.7), 0 0 10px rgba(0, 255, 200, 0.5)'
+	},
+	'50%': { 
+		textShadow: '0 0 10px rgba(0, 255, 200, 0.9), 0 0 15px rgba(0, 255, 200, 0.7)'
+	}
+}
+@keyframes float {
+	'0%, 100%': { transform: 'translateY(0)' },
+	'50%': { transform: 'translateY(-10px)' }
+}
+@keyframes scanning {
+	'0%': { backgroundPosition: '0% 0%' },
+	'100%': { backgroundPosition: '100% 100%' }
 }

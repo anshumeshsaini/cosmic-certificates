@@ -1,29 +1,46 @@
 
 import React from 'react';
-import { Cpu, Globe, Heart } from 'lucide-react';
+import { Cpu, Globe, Heart, LogIn, User } from 'lucide-react';
+import { Button } from './ui/button';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   return (
-      <header className="border-b border-cyberpunk-cyan/20 bg-cyberpunk-black/90 backdrop-blur-md py-4 px-6">
-        <div className="container flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Heart className="w-6 h-6 " />
-
-            <h1 className="text-xl font-bold tracking-wider neon-text">CertiProX </h1>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center gap-2 text-sm text-cyberpunk-cyan/70">
-              <Cpu className="w-4 h-4" />
-              <span>AI Powered</span>
-            </div>
-
-
-
-
-          </div>
+    <header className="border-b border-blue-900/20 bg-gradient-to-r from-blue-950 to-blue-900/90 backdrop-blur-md py-4 px-6 sticky top-0 z-50 shadow-md">
+      <div className="container flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <Heart className="w-6 h-6 text-blue-400" />
+          <h1 className="text-xl font-bold tracking-wider text-white">
+            CertiProX <span className="text-xs font-normal text-blue-300">Premium</span>
+          </h1>
         </div>
-      </header>
+
+        <div className="flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-2 text-sm text-blue-300">
+            <Cpu className="w-4 h-4" />
+            <span>AI Powered</span>
+          </div>
+          
+          <Button 
+            variant="ghost" 
+            className="text-blue-200 hover:text-white hover:bg-blue-800/50"
+            size="sm"
+          >
+            <Globe className="w-4 h-4 mr-2" />
+            Features
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="bg-blue-800/30 border-blue-400/30 text-blue-200 hover:text-white hover:bg-blue-700/50"
+            size="sm"
+          >
+            <LogIn className="w-4 h-4 mr-2" />
+            Login
+          </Button>
+        </div>
+      </div>
+    </header>
   );
 };
 
