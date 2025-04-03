@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Bot, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const AIAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,6 +10,7 @@ const AIAssistant = () => {
   const [chatHistory, setChatHistory] = useState<Array<{type: 'user' | 'ai', text: string}>>([
     { type: 'ai', text: 'Hello! I am your AI assistant. How can I help you with certificate generation today?' }
   ]);
+  const isMobile = useIsMobile();
 
   const toggleAssistant = () => {
     setIsOpen(!isOpen);
@@ -55,7 +57,7 @@ const AIAssistant = () => {
       {/* Chat button */}
       <button 
         onClick={toggleAssistant}
-        className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg transition-all duration-300 z-40 ${
+        className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg transition-all duration-300 z-30 ${
           isOpen 
             ? 'bg-cyberpunk-purple text-white rotate-90 transform'
             : 'bg-gradient-to-r from-cyberpunk-blue to-cyberpunk-cyan text-white animate-pulse-glow'
@@ -66,7 +68,7 @@ const AIAssistant = () => {
       
       {/* Chat interface */}
       {isOpen && (
-        <div className="fixed bottom-20 right-6 w-72 sm:w-80 md:w-96 rounded-lg cyberpunk-card shadow-2xl z-50 flex flex-col max-h-[70vh]">
+        <div className="fixed bottom-20 right-6 w-72 sm:w-80 md:w-96 rounded-lg cyberpunk-card shadow-2xl z-30 flex flex-col max-h-[70vh]">
           <div className="bg-gradient-to-r from-cyberpunk-blue to-cyberpunk-purple p-3 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-white" />

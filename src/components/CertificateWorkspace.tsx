@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const CertificateWorkspace = () => {
   const [certificateImage, setCertificateImage] = useState<string | null>(null);
@@ -33,6 +34,7 @@ const CertificateWorkspace = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const excelInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
   const fontOptions = [
     { value: 'Arial', label: 'Arial' },
@@ -508,9 +510,9 @@ const CertificateWorkspace = () => {
     <div className="flex flex-col h-full gap-6">
       <div className="grid md:grid-cols-5 gap-6 flex-1">
         <div className="md:col-span-4 cyberpunk-card flex flex-col h-full min-h-[60vh]">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
             <h2 className="text-xl font-semibold text-cyberpunk-cyan">Workspace</h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <button 
                 onClick={togglePreviewMode}
                 className={`cyberpunk-button text-sm flex items-center gap-1 ${previewMode ? 'bg-cyberpunk-cyan/20' : ''}`}
@@ -604,7 +606,7 @@ const CertificateWorkspace = () => {
           </div>
           
           {selectedTextId && !previewMode && (
-            <div className="flex gap-4 mt-4 p-4 bg-cyberpunk-black/60 rounded-lg border border-cyberpunk-cyan/30">
+            <div className="flex flex-col sm:flex-row gap-4 mt-4 p-4 bg-cyberpunk-black/60 rounded-lg border border-cyberpunk-cyan/30">
               <div className="flex-1">
                 <label className="text-sm text-cyberpunk-cyan/80 mb-1 block">Font</label>
                 <Select 
@@ -763,7 +765,7 @@ const CertificateWorkspace = () => {
 
       <Sheet>
         <SheetTrigger asChild>
-          <button className="fixed bottom-4 right-4 bg-cyberpunk-cyan/80 text-cyberpunk-black p-2 rounded-full z-20 hover:bg-cyberpunk-cyan shadow-lg hover:shadow-[0_0_15px_rgba(0,255,200,0.5)]">
+          <button className="fixed bottom-24 right-4 bg-cyberpunk-cyan/80 text-cyberpunk-black p-2 rounded-full z-20 hover:bg-cyberpunk-cyan shadow-lg hover:shadow-[0_0_15px_rgba(0,255,200,0.5)]">
             <Edit className="h-5 w-5" />
           </button>
         </SheetTrigger>
