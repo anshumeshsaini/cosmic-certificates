@@ -55,7 +55,7 @@ const AIAssistant = () => {
       {/* Chat button */}
       <button 
         onClick={toggleAssistant}
-        className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg transition-all duration-300 z-50 ${
+        className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg transition-all duration-300 z-40 ${
           isOpen 
             ? 'bg-cyberpunk-purple text-white rotate-90 transform'
             : 'bg-gradient-to-r from-cyberpunk-blue to-cyberpunk-cyan text-white animate-pulse-glow'
@@ -66,7 +66,7 @@ const AIAssistant = () => {
       
       {/* Chat interface */}
       {isOpen && (
-        <div className="fixed bottom-20 right-6 w-80 md:w-96 rounded-lg cyberpunk-card shadow-2xl z-50 flex flex-col max-h-[70vh]">
+        <div className="fixed bottom-20 right-6 w-72 sm:w-80 md:w-96 rounded-lg cyberpunk-card shadow-2xl z-50 flex flex-col max-h-[70vh]">
           <div className="bg-gradient-to-r from-cyberpunk-blue to-cyberpunk-purple p-3 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-white" />
@@ -101,7 +101,7 @@ const AIAssistant = () => {
               onChange={(e) => setMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask anything..."
-              className="flex-1 bg-cyberpunk-black/60 border border-cyberpunk-cyan/30 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyberpunk-cyan/50"
+              className="flex-1 bg-cyberpunk-black/60 border border-cyberpunk-cyan/30 text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyberpunk-cyan/50 text-sm"
             />
             <button 
               onClick={handleSendMessage}
