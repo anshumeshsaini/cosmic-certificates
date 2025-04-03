@@ -44,12 +44,10 @@ const Signup = () => {
     try {
       const success = await signup(data.name, data.email, data.password);
       if (success) {
-        toast.success('Account created successfully');
-        navigate('/');
-      } else {
-        toast.error('Failed to create account');
+        navigate('/login');
       }
     } catch (error) {
+      console.error(error);
       toast.error('Something went wrong. Please try again.');
     } finally {
       setIsSigningUp(false);
@@ -61,7 +59,7 @@ const Signup = () => {
       <Header />
       
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="cyberpunk-card w-full max-w-md p-8">
+        <div className="w-full max-w-md p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
           <h1 className="text-2xl font-bold text-center mb-6">Create an Account</h1>
           
           <Form {...form}>
@@ -142,7 +140,7 @@ const Signup = () => {
               
               <Button 
                 type="submit" 
-                className="w-full cyberpunk-button mt-6" 
+                className="w-full mt-6" 
                 disabled={isSigningUp}
               >
                 {isSigningUp ? (

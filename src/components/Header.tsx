@@ -9,8 +9,8 @@ const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
@@ -49,7 +49,7 @@ const Header = () => {
                 size="sm"
               >
                 <User className="w-4 h-4 mr-2" />
-                {user.name}
+                {user.email}
               </Button>
               
               <Button 

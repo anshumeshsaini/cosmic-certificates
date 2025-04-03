@@ -4,7 +4,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -40,10 +39,9 @@ const Login = () => {
       if (success) {
         toast.success('Logged in successfully');
         navigate('/');
-      } else {
-        toast.error('Invalid email or password');
       }
     } catch (error) {
+      console.error(error);
       toast.error('Something went wrong. Please try again.');
     } finally {
       setIsLoggingIn(false);
@@ -55,7 +53,7 @@ const Login = () => {
       <Header />
       
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="cyberpunk-card w-full max-w-md p-8">
+        <div className="w-full max-w-md p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
           <h1 className="text-2xl font-bold text-center mb-6">Log in to CertiProX</h1>
           
           <Form {...form}>
@@ -100,7 +98,7 @@ const Login = () => {
               
               <Button 
                 type="submit" 
-                className="w-full cyberpunk-button mt-6" 
+                className="w-full mt-6" 
                 disabled={isLoggingIn}
               >
                 {isLoggingIn ? (
